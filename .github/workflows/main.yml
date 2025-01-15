@@ -1,38 +1,37 @@
-name: Deploy Azure Function App
+name: Deploy to Azure Functions
 
 on:
   push:
-    branches: 
+    branches:
       - main
   workflow_dispatch:
-
-env:
-  AZURE_FUNCTIONAPP_NAME: 'consigmais'   # Nome correto da sua Function App
-  NODE_VERSION: '18.x'
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.'
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v3
+      - name: 'Checkout GitHub Action'
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        
-    - name: Install dependencies
-      run: |
-        npm install
-        npm run build --if-present
-        
-    - name: 'Deploy Azure Function'
-      uses: Azure/functions-action@v1
-      id: deploy
-      with:
-        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
-        package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
-        scm-do-build-during-deployment: true
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: 'Resolve Project Dependencies Using Npm'
+        shell: bash
+        run: |
+          pushd .
+          npm install
+          npm run build --if-present
+          popd
+
+      - name: 'Run Azure Functions Action'
+        uses: Azure/functions-action@v1
+        id: fa
+        with:
+          app-name: 'consigmais'
+          slot-name: 'Production'
+          package: '.'
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+          respect-funcignore: true
