@@ -2,15 +2,17 @@ name: Deploy Azure Function App
 
 on:
   push:
-    branches: [ "main" ]  # Executa quando houver push na branch main
+    branches: 
+      - main  # Deploy em produção
+  workflow_dispatch:  # Permite executar manualmente
 
 env:
-  AZURE_FUNCTIONAPP_NAME: 'consigmais'   # Nome da sua Function App na Azure
+  AZURE_FUNCTIONAPP_NAME: 'consigmais'   # Mantenha o nome atual da sua function
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
     - uses: actions/checkout@v3
 
@@ -23,6 +25,7 @@ jobs:
       run: npm install
 
     - name: Deploy to Azure Functions
+      if: github.ref == 'refs/heads/main'  # Só faz deploy se for na main
       uses: Azure/functions-action@v1
       with:
         app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
