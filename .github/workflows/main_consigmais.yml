@@ -10,24 +10,28 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
+      - name: 'Checkout GitHub Action'
+        uses: actions/checkout@v4
+
+      - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-          
-      - name: Install dependencies
-        run: npm install
-        
-      - name: Remove dev dependencies and install production only
+
+      - name: 'Resolve Project Dependencies Using Npm'
+        shell: bash
         run: |
-          rm -rf node_modules/
-          npm install --production
-          
-      - name: Deploy to Azure Functions
+          pushd .
+          npm install
+          npm run build --if-present
+          popd
+
+      - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
+        id: fa
         with:
           app-name: 'consigmais'
+          slot-name: 'Production'
           package: '.'
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+          respect-funcignore: true
