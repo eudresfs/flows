@@ -1,4 +1,4 @@
-name: Build and deploy Node.js project to Azure Function App - consigmais
+name: Deploy to Azure Functions
 
 on:
   push:
@@ -6,40 +6,28 @@ on:
       - main
   workflow_dispatch:
 
-env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.'
-  NODE_VERSION: '18'
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: 'Checkout GitHub Action'
-        uses: actions/checkout@v4
-
-      - name: Setup Node ${{ env.NODE_VERSION }} Environment
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: 'Resolve Project Dependencies Using Npm'
-        shell: bash
-        run: |
-          npm install
-          npm run build --if-present
+          node-version: '18'
           
-      - name: Package Functions
-        shell: bash
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Remove dev dependencies and install production only
         run: |
-          mkdir -p ./package
-          cp -r host.json package.json node_modules src flow ./package/
+          rm -rf node_modules/
+          npm install --production
           
-      - name: 'Deploy to Azure Functions'
+      - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1
-        id: fa
         with:
           app-name: 'consigmais'
-          package: './package'
+          package: '.'
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
-          respect-pom-xml: false
-          scm-do-build-during-deployment: false
